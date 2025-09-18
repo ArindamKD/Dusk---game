@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adventure Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+        /* Only show the active screen */
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-size: cover;
+            background-position: center;
+            display: none;
+        }
+        .screen.active {
+            display: flex;
+        }
+        .button {
+            padding: 16px 32px;
+            font-size: 18px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .button:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+        }
+        .button:hover::before {
+            left: 100%;
+        }
+        .button:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+        /* Main Screen */
+        #mainScreen {
+            background-image: url('main_image.png');
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .main-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 50px;
+            animation: fadeInUp 1s ease 0.5s both;
+        }
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        /* Behind the Scenes Screen */
+        #behindScenesScreen {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+        }
+        .back-btn:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4);
+        }
+        .gallery {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            padding: 80px 20px 40px;
+        }
+        .gallery-image {
+            max-width: 1000px;
+            width: 90%;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .gallery-image:hover {
+            transform: scale(1.03) translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        /* How to Play Screen */
+        #howToPlayScreen {
+            background-image: url('howto.png');
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        .instruction-text {
+            font-size: 26px;
+            font-weight: 500;
+            color: #1e293b;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            line-height: 1.6;
+            animation: bounceIn 1s ease;
+        }
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            70% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+        /* Game Screen */
+        #gameScreen {
+            background-image: url('background.png');
+            position: relative;
+        }
+        .timer {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 25px;
+            font-size: 22px;
+            font-weight: 700;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            z-index: 50;
+            animation: timerPulse 2s infinite;
+        }
+        @keyframes timerPulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+        }
+        #player {
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            background-image: url('player.gif');
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 10;
+            transition: all 0.2s ease;
+            left: 0;
+            right: 0;
+            transform: translate(-12%, -65%);
+        }
+        .hotspot {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            animation: hotspotFloat 2s infinite ease-in-out;
+            cursor: pointer;
+            z-index: 5;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+        }
+        @keyframes hotspotFloat {
+            0%, 100% { 
+                transform: scale(1) translateY(0px);
+                box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+            }
+            50% { 
+                transform: scale(1.2) translateY(-5px);
+                box-shadow: 0 0 30px rgba(251, 191, 36, 0.8);
+            }
+        }
+        /* Item Collection Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(5px);
+        }
+        .item-card {
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            padding: 50px;
+            border-radius: 25px;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+            animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 500px;
+        }
+        @keyframes cardAppear {
+            0% { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .item-image {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .item-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .item-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #64748b;
+            margin-top: 10px;
+        }
+        /* End Screens */
+        .end-screen {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        #failScreen {
+            background-image: url('fail.png');
+        }
+        #successScreen {
+            background-image: url('success.png');
+        }
+        .end-message {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1e293b;
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            padding: 40px 60px;
+            border-radius: 25px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            animation: messageSlide 0.8s ease;
+        }
+        @keyframes messageSlide {
+            0% { transform: translateY(-100px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .collected-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+            max-width: 1200px;
+        }
+        .collected-item {
+            width: 280px;
+            height: 160px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            animation: itemReveal 0.6s ease;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .collected-item:hover {
+            transform: scale(1.05) translateY(-5px);
+        }
+        @keyframes itemReveal {
+            0% { transform: scale(0) rotate(180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Screen -->
+    <div id="mainScreen" class="screen active">
+        <div class="main-buttons">
+            <button class="button" onclick="showHowToPlay()">Play</button>
+            <button class="button" onclick="showBehindScenes()">Behind the Scenes</button>
+        </div>
+    </div>
+    <!-- Behind the Scenes Screen -->
+    <div id="behindScenesScreen" class="screen">
+        <button class="button back-btn" onclick="showMainScreen()">← Back</button>
+        <div class="gallery">
+            <img src="A.jpg" alt="Behind the scenes A" class="gallery-image">
+            <img src="B.jpg" alt="Behind the scenes B" class="gallery-image">
+            <img src="C.jpg" alt="Behind the scenes C" class="gallery-image">
+            <img src="D.jpg" alt="Behind the scenes D" class="gallery-image">
+            <img src="E.jpg" alt="Behind the scenes E" class="gallery-image">
+        </div>
+    </div>
+    <!-- How to Play Screen -->
+    <div id="howToPlayScreen" class="screen">
+        <button class="button back-btn" onclick="showMainScreen()">← Back</button>
+        <div class="instruction-text">
+            Let's go out!<br>
+            But Mom asked to BE BACK SOON!
+        </div>
+        <button class="button" onclick="startGame()">Let's Go!</button>
+    </div>
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+        <button class="button back-btn" onclick="endGameEarly()">← Back</button>
+        <div class="timer" id="timer">00:59</div>
+        <div id="player"></div>
+        <!-- Hotspots will be added here -->
+    </div>
+    <!-- Item Collection Overlay -->
+    <div id="overlay" class="overlay">
+        <div class="item-card">
+            <img id="itemImage" src="" alt="Item" class="item-image">
+            <div id="itemTitle" class="item-title"></div>
+            <div id="itemText" class="item-text"></div>
+        </div>
+    </div>
+    <!-- Fail Screen -->
+    <div id="failScreen" class="screen end-screen">
+        <div class="end-message">You Failed!</div>
+        <button class="button" onclick="showMainScreen()">Replay?</button>
+    </div>
+    <!-- Success Screen -->
+    <div id="successScreen" class="screen end-screen">
+        <div class="end-message">What a day!</div>
+        <div id="collectedItems" class="collected-items"></div>
+        <button class="button" onclick="showMainScreen()">Replay?</button>
+    </div>
+    <script>
+        // Game state
+        let game = {
+            currentScreen: 'mainScreen',
+            timeLeft: 59,
+            timer: null,
+            playerGridX: 48, // grid position
+            playerGridY: 27, // grid position
+            collectedItems: [],
+            inputBlocked: false,
+            hotspots: [
+                { gridX: 7, gridY: 24, image: 'creamroll.png', title: 'Cream Roll', text: 'Dry, but the cream is..muah!', active: true },
+                { gridX: 10, gridY: 35, image: 'coffeebite.png', title: 'Coffee Bite', text: 'Maybe I am too young for caffeine!', active: true },
+                { gridX: 15, gridY: 45, image: 'mahalacto.png', title: 'Maha Lacto', text: 'A mystical gem that glows softly!', active: true },
+                { gridX: 17, gridY: 11, image: 'poppins.png', title: 'Poppins', text: 'Aye du kya?!', active: true },
+                { gridX: 25, gridY: 9, image: 'boomer.png', title: 'Boomer', text: 'Boom-boom-boomer!', active: true },
+                { gridX: 42, gridY: 19, image: 'cigarettes.png', title: 'Phantom Sugar Cigars', text: 'Mom can\'t see me like this!', active: true },
+                { gridX: 51, gridY: 9, image: 'centreshock.png', title: 'Center Shock', text: 'This one packs a surprise!', active: true },
+                { gridX: 88, gridY: 8, image: 'jujube.png', title: 'Jujube fruit (ber)', text: 'There are always some on the ground!', active: true },
+                { gridX: 87, gridY: 45, image: 'hippo.png', title: 'Hippo Chips', text: 'Baked but not boring!', active: true },
+                { gridX: 79, gridY: 41, image: 'icecream.png', title: 'Paddle Pop', text: 'Mom shouldn\'t know!', active: true }
+            ],
+            // Audio objects
+            backgroundMusic: null,
+            gameMusic: null,
+            hotspotSound: null,
+            failSound: null,
+            successSound: null,
+            // Walkable paths as grid coordinates
+            walkablePaths: [
+                // Horizontal paths
+                { x1: 5, y1: 24, x2: 40, y2: 24 },
+                { x1: 30, y1: 36, x2: 87, y2: 36 },
+                { x1: 15, y1: 45, x2: 48, y2: 45 },
+                { x1: 25, y1: 15, x2: 40, y2: 15 },
+                { x1: 25, y1: 9, x2: 40, y2: 9 },
+                { x1: 40, y1: 19, x2: 56, y2: 19 },
+                { x1: 56, y1: 24, x2: 88, y2: 24 },
+                { x1: 79, y1: 46, x2: 87, y2: 46 },
+                // Vertical paths
+                { x1: 10, y1: 24, x2: 10, y2: 37 },
+                { x1: 17, y1: 9, x2: 17, y2: 24 },
+                { x1: 25, y1: 9, x2: 25, y2: 24 },
+                { x1: 40, y1: 9, x2: 40, y2: 24 },
+                { x1: 51, y1: 9, x2: 51, y2: 19 },
+                { x1: 30, y1: 24, x2: 30, y2: 40 },
+                { x1: 48, y1: 19, x2: 48, y2: 27 },
+                { x1: 56, y1: 19, x2: 56, y2: 24 },
+                { x1: 88, y1: 5, x2: 88, y2: 24 },
+                { x1: 48, y1: 36, x2: 48, y2: 45 },
+                { x1: 79, y1: 36, x2: 79, y2: 46 },
+                { x1: 87, y1: 36, x2: 87, y2: 46 }
+            ]
+        };
+        
+        // Initialize everything when page loads
+        window.onload = function() {
+            setupAudio();
+            setupKeyboard();
+            // Delay the music slightly to ensure it plays
+            setTimeout(() => {
+                playBackgroundMusic();
+            }, 500);
+        };
+        
+        // Audio setup
+        function setupAudio() {
+            game.backgroundMusic = createAudio('music.mp3', true, 0.5);
+            game.gameMusic = createAudio('game.mp3', true, 0.6);
+            game.hotspotSound = createAudio('hotspot.mp3', false, 0.7);
+            game.failSound = createAudio('failed.mp3', false, 0.6);
+            game.successSound = createAudio('success.mp3', false, 0.6);
+        }
+        
+        function createAudio(src, loop, volume) {
+            let audio = new Audio(src);
+            audio.loop = loop;
+            audio.volume = volume;
+            // Add user interaction handler for autoplay policy
+            audio.preload = 'auto';
+            return audio;
+        }
+        
+        function playBackgroundMusic() {
+            stopAllMusic();
+            if (game.backgroundMusic) {
+                // Handle autoplay restrictions
+                game.backgroundMusic.play().catch(e => {
+                    console.log('Background music blocked, will play after user interaction');
+                    // Add click listener to play music after first user interaction
+                    document.addEventListener('click', function playOnFirstClick() {
+                        game.backgroundMusic.play().catch(e => console.log('Still blocked:', e));
+                        document.removeEventListener('click', playOnFirstClick);
+                    }, { once: true });
+                });
+            }
+        }
+        
+        function stopAllMusic() {
+            [game.backgroundMusic, game.gameMusic, game.hotspotSound, game.failSound, game.successSound]
+                .forEach(audio => {
+                    if (audio) {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }
+                });
+        }
+        
+        // Grid-based collision detection system
+        function canWalkHere(gridX, gridY) {
+            // Check if position is on any walkable path
+            return game.walkablePaths.some(path => {
+                if (path.x1 === path.x2) { // Vertical path
+                    return gridX === path.x1 && gridY >= Math.min(path.y1, path.y2) && gridY <= Math.max(path.y1, path.y2);
+                } else { // Horizontal path
+                    return gridY === path.y1 && gridX >= Math.min(path.x1, path.x2) && gridX <= Math.max(path.x1, path.x2);
+                }
+            });
+        }
+        
+        // Convert grid coordinates to screen percentages
+        function gridToPercent(gridX, gridY) {
+            return {
+                x: (gridX / 96) * 100,
+                y: (gridY / 54) * 100
+            };
+        }
+        
+        // Screen management
+        function showScreen(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Show target screen
+            document.getElementById(screenId).classList.add('active');
+            game.currentScreen = screenId;
+        }
+        
+        function showMainScreen() {
+            showScreen('mainScreen');
+            playBackgroundMusic();
+            resetGame();
+        }
+        
+        function showBehindScenes() {
+            showScreen('behindScenesScreen');
+        }
+        
+        function showHowToPlay() {
+            showScreen('howToPlayScreen');
+        }
+        
+        // Game functions
+        function startGame() {
+            showScreen('gameScreen');
+            stopAllMusic();
+            if (game.gameMusic) {
+                game.gameMusic.play().catch(e => console.log('Game music blocked:', e));
+            }
+            resetGame();
+            createHotspots();
+            startTimer();
+            updatePlayerPosition();
+        }
+        
+        function resetGame() {
+            game.timeLeft = 59;
+            game.playerGridX = 48;
+            game.playerGridY = 27;
+            game.collectedItems = [];
+            game.inputBlocked = false;
+            
+            // Reset hotspots
+            game.hotspots.forEach(hotspot => hotspot.active = true);
+            
+            // Clear timer
+            if (game.timer) {
+                clearInterval(game.timer);
+                game.timer = null;
+            }
+        }
+        
+        function updatePlayerPosition() {
+            let player = document.getElementById('player');
+            if (player) {
+                let pos = gridToPercent(game.playerGridX, game.playerGridY);
+                player.style.left = pos.x + '%';
+                player.style.top = pos.y + '%';
+            }
+        }
+        
+        function createHotspots() {
+            // Remove existing hotspots
+            document.querySelectorAll('.hotspot').forEach(h => h.remove());
+            
+            // Create new hotspots
+            let gameScreen = document.getElementById('gameScreen');
+            game.hotspots.forEach((hotspot, index) => {
+                if (hotspot.active) {
+                    let spot = document.createElement('div');
+                    spot.className = 'hotspot';
+                    let pos = gridToPercent(hotspot.gridX, hotspot.gridY);
+                    spot.style.left = pos.x + '%';
+                    spot.style.top = pos.y + '%';
+                    spot.onclick = () => collectItem(index);
+                    gameScreen.appendChild(spot);
+                }
+            });
+        }
+        
+        function startTimer() {
+            let timerDisplay = document.getElementById('timer');
+            game.timer = setInterval(() => {
+                game.timeLeft--;
+                let minutes = Math.floor(game.timeLeft / 60);
+                let seconds = game.timeLeft % 60;
+                timerDisplay.textContent = 
+                    minutes.toString().padStart(2, '0') + ':' + 
+                    seconds.toString().padStart(2, '0');
+                
+                if (game.timeLeft <= 0) {
+                    endGame(false);
+                }
+            }, 1000);
+        }
+        
+        // Player movement with grid-based collision detection
+        function setupKeyboard() {
+            document.addEventListener('keydown', (e) => {
+                if (game.currentScreen === 'gameScreen' && !game.inputBlocked) {
+                    movePlayer(e.key);
+                }
+            });
+        }
+        
+        function movePlayer(key) {
+            let newGridX = game.playerGridX;
+            let newGridY = game.playerGridY;
+            
+            switch(key) {
+                case 'ArrowUp':
+                    newGridY = game.playerGridY - 1;
+                    break;
+                case 'ArrowDown':
+                    newGridY = game.playerGridY + 1;
+                    break;
+                case 'ArrowLeft':
+                    newGridX = game.playerGridX - 1;
+                    break;
+                case 'ArrowRight':
+                    newGridX = game.playerGridX + 1;
+                    break;
+                default:
+                    return;
+            }
+            
+            // Keep within bounds
+            newGridX = Math.max(1, Math.min(96, newGridX));
+            newGridY = Math.max(1, Math.min(54, newGridY));
+            
+            // Check if new position is walkable
+            if (canWalkHere(newGridX, newGridY)) {
+                // Update position
+                game.playerGridX = newGridX;
+                game.playerGridY = newGridY;
+                
+                updatePlayerPosition();
+                
+                // Check for hotspot collisions
+                checkCollisions();
+                
+                // Check if back home (center area around starting position)
+                if (Math.abs(newGridX - 48) <= 2 && Math.abs(newGridY - 27) <= 2 && game.collectedItems.length > 0) {
+                    endGame(true);
+                }
+            }
+            // If not walkable, don't move (collision detected)
+        }
+        
+        function checkCollisions() {
+            game.hotspots.forEach((hotspot, index) => {
+                if (hotspot.active) {
+                    // Check if player is on the same grid square as hotspot
+                    if (game.playerGridX === hotspot.gridX && game.playerGridY === hotspot.gridY) {
+                        collectItem(index);
+                    }
+                }
+            });
+        }
+        
+        function collectItem(index) {
+            let hotspot = game.hotspots[index];
+            if (!hotspot.active || game.inputBlocked) return;
+            
+            // Block input for 4 seconds
+            game.inputBlocked = true;
+            
+            // Deactivate hotspot
+            hotspot.active = false;
+            game.collectedItems.push({ 
+                image: hotspot.image, 
+                title: hotspot.title,
+                text: hotspot.text 
+            });
+            
+            // Play sound
+            if (game.hotspotSound) {
+                game.hotspotSound.currentTime = 0;
+                game.hotspotSound.play().catch(e => console.log('Hotspot sound blocked:', e));
+            }
+            
+            // Show item with title and text
+            let overlay = document.getElementById('overlay');
+            let itemImage = document.getElementById('itemImage');
+            let itemTitle = document.getElementById('itemTitle');
+            let itemText = document.getElementById('itemText');
+            itemImage.src = hotspot.image;
+            itemTitle.textContent = hotspot.title;
+            itemText.textContent = hotspot.text;
+            overlay.style.display = 'flex';
+            
+            // Remove hotspot from screen
+            createHotspots();
+            
+            // Hide overlay and re-enable input after 4 seconds
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                game.inputBlocked = false;
+            }, 2500);
+        }
+        
+        function endGame(success) {
+            if (game.timer) {
+                clearInterval(game.timer);
+                game.timer = null;
+            }
+            
+            stopAllMusic();
+            
+            if (success) {
+                // Show collected items
+                let container = document.getElementById('collectedItems');
+                container.innerHTML = '';
+                game.collectedItems.forEach((item, i) => {
+                    let img = document.createElement('img');
+                    img.src = item.image;
+                    img.className = 'collected-item';
+                    img.style.animationDelay = (i * 0.15) + 's';
+                    img.title = item.title + ' - ' + item.text; // Tooltip with item title and text
+                    container.appendChild(img);
+                });
+                
+                if (game.successSound) {
+                    game.successSound.play().catch(e => console.log('Success sound blocked:', e));
+                }
+                showScreen('successScreen');
+            } else {
+                if (game.failSound) {
+                    game.failSound.play().catch(e => console.log('Fail sound blocked:', e));
+                }
+                showScreen('failScreen');
+            }
+        }
+        
+        function endGameEarly() {
+            if (game.timer) {
+                clearInterval(game.timer);
+                game.timer = null;
+            }
+            showMainScreen();
+        }
+    </script>
+</body>
+</html>
