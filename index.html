@@ -569,7 +569,6 @@
                     let pos = gridToPercent(hotspot.gridX, hotspot.gridY);
                     spot.style.left = pos.x + '%';
                     spot.style.top = pos.y + '%';
-                    spot.onclick = () => collectItem(index);
                     gameScreen.appendChild(spot);
                 }
             });
