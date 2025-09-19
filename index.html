@@ -624,6 +624,27 @@
                 default:
                     return;
             }
+                    
+        function movePlayer(key) {
+            let newGridX = game.playerGridX;
+            let newGridY = game.playerGridY;
+            
+            switch(key) {
+                case 'w':
+                    newGridY = game.playerGridY - 1;
+                    break;
+                case 's':
+                    newGridY = game.playerGridY + 1;
+                    break;
+                case 'a':
+                    newGridX = game.playerGridX - 1;
+                    break;
+                case 'd':
+                    newGridX = game.playerGridX + 1;
+                    break;
+                default:
+                    return;
+            }
             
             // Keep within bounds
             newGridX = Math.max(1, Math.min(96, newGridX));
