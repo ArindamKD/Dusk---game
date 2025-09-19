@@ -603,22 +603,22 @@
                 }
             });
         }
-         
+        
         function movePlayer(key) {
             let newGridX = game.playerGridX;
             let newGridY = game.playerGridY;
             
             switch(key) {
-                case 'w':
+                case 'ArrowUp':
                     newGridY = game.playerGridY - 1;
                     break;
-                case 's':
+                case 'ArrowDown':
                     newGridY = game.playerGridY + 1;
                     break;
-                case 'a':
+                case 'ArrowLeft':
                     newGridX = game.playerGridX - 1;
                     break;
-                case 'd':
+                case 'ArrowRight':
                     newGridX = game.playerGridX + 1;
                     break;
                 default:
